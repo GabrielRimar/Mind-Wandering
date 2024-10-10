@@ -37,7 +37,16 @@ import math
 
 from facial_landmarks import detect_facial_landmarks
 
-facial_landmarks_cordinates = detect_facial_landmarks("shape_predictor_68_face_landmarks.dat", "image1.jpg")
+image_path = ""
+
+def set_image_path(path):
+    global image_path
+    image_path = path
+
+shape_predictor_path = "shape_predictor_68_face_landmarks.dat"
+
+
+facial_landmarks_cordinates = detect_facial_landmarks(shape_predictor_path, image_path)
 facial_landmarks_cordinates = facial_landmarks_cordinates[0].tolist()
 #print(facial_landmarks_cordinates)
 
@@ -56,7 +65,14 @@ def EAR(eye):
         raise ValueError("The eye array is not correct in the correct size.\n"
                          "size required 6\n"
                          f"your size {len(eye)}")
+def is_closed(eye):
+    return eye <= 0.2
 
+def get_EAR_left_eye():
+    return EAR(left_eye)
+
+def get_EAR_right_eye():
+    return EAR(right_eye)
 
 #print (f"dddd{left_eye}")
 
