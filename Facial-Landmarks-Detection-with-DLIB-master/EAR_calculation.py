@@ -34,10 +34,15 @@ float
 """
 
 import math
-
+import os
+import cv2
+import dlib
+from imutils import face_utils
+'''
 from facial_landmarks import detect_facial_landmarks
 
-image_path = ""
+
+image_path = ""#images\image1.jpg
 
 def set_image_path(path):
     global image_path
@@ -52,6 +57,8 @@ facial_landmarks_cordinates = facial_landmarks_cordinates[0].tolist()
 
 left_eye = facial_landmarks_cordinates[36:42] # landmarkes in indexes 37 - 42
 right_eye = facial_landmarks_cordinates[42:48] # landmarkes in indexes 43 - 48
+
+
 
 def distance_between_points(p1, p2):
     if not p1 or not p2:
@@ -82,6 +89,79 @@ EAR_Right = EAR(right_eye)
 print(f"EAR on left eye: {EAR_left}")
 
 print(f"EAR on right eye: {EAR_Right}")
+'''
 
 
 
+class EARCalculator:
+
+    def __init__(self, shape_predictor_path):
+        if not cv2.os.path.isfile(shape_predictor_path):
+            raise FileNotFoundError(f"Shape predictor file not found at {shape_predictor_path}.")
+
+        self.detector = dlib.get_frontal_face_detector()
+        self.predictor = dlib.shape_predictor(shape_predictor_path)
+    
+    @staticmethod
+    def _distance(p1,p2):
+        '''
+        This method calculates the distance between two points, it's a static method.
+        '''
+        if p1 is None or p2 is None:
+           
+            raise ValueError("Point 1 or Point 2 is empty")
+
+        return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
+    
+        #hypot -> square root of squared sums added
+    def calculate_EAR_path(self, image_path):
+        # if you do want to check it with a certain image
+        
+        if not cv2.os.path.isfile(image_path):
+             raise FileNotFoundError(f"Image file not found at {image_path}.")
+        image = cv2.imread(image_path)
+        
+        return self.calculate_EAR(image)
+    
+    def calculate_EAR(self, image):
+        
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        rects = self.detector(gray,0)
+
+        if len(rects) == 0:
+            print("No face detected")
+            return None , None
+        
+        for rect in rects:
+            shape = self.predictor(gray,rect)
+            shape = face_utils.shape_to_np(shape)
+
+            left_eye = shape[36:42] # landmarkes in indexes 37 - 42
+            right_eye = shape[42:48] # landmarkes in indexes 43 - 48
+
+            left_EAR = self._calculate_EAR(left_eye)
+            right_EAR = self._calculate_EAR(right_eye)
+
+            return left_EAR, right_EAR
+
+    def _calculate_EAR(self, eye):
+        if len(eye) != 6:
+            raise ValueError(f"Expected 6 eye landmarks, got {len(eye)}.")
+        
+        a = self._distance(eye[1] , eye[5])
+        b = self._distance(eye[2], eye[4])
+        c = self._distance(eye[0], eye[3])
+        
+        ear = (a + b)/ (2*c)
+
+        return ear
+    
+    @staticmethod
+    def is_eye_closed(ear, threshold = 0.19):
+        # Determines if the eye is closed based on EAR.
+        return ear <= threshold
+
+
+        
+
+        

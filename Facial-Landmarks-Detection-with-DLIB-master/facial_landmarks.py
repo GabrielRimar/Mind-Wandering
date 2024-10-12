@@ -7,7 +7,7 @@ import cv2
 
 def detect_facial_landmarks(shape_predictor_path, image_path):
     # construct the argument parser and parse the arguments
-    #shape_predictor_path = "shape_predictor_68_face_landmarks.dat"
+    shape_predictor_path = "shape_predictor_68_face_landmarks.dat"
     #image_path = "image1.jpg"
 
     # initialize dlib's face detector (HOG-based) and then create
