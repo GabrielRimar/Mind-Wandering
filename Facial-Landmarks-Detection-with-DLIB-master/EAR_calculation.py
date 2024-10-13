@@ -38,60 +38,6 @@ import os
 import cv2
 import dlib
 from imutils import face_utils
-'''
-from facial_landmarks import detect_facial_landmarks
-
-
-image_path = ""#images\image1.jpg
-
-def set_image_path(path):
-    global image_path
-    image_path = path
-
-shape_predictor_path = "shape_predictor_68_face_landmarks.dat"
-
-
-facial_landmarks_cordinates = detect_facial_landmarks(shape_predictor_path, image_path)
-facial_landmarks_cordinates = facial_landmarks_cordinates[0].tolist()
-#print(facial_landmarks_cordinates)
-
-left_eye = facial_landmarks_cordinates[36:42] # landmarkes in indexes 37 - 42
-right_eye = facial_landmarks_cordinates[42:48] # landmarkes in indexes 43 - 48
-
-
-
-def distance_between_points(p1, p2):
-    if not p1 or not p2:
-        raise ValueError("Point 1 or 2 is emty")
-    return math.sqrt(math.pow(p1[0] - p2[0],2) +math.pow(p1[1] - p2[1],2))
-
-def EAR(eye):
-    if (len(eye) == 6):
-        return (distance_between_points(eye[1] , eye[5]) + distance_between_points(eye[2], eye[4]))/(2*distance_between_points(eye[0], eye[3]))
-    else:
-        raise ValueError("The eye array is not correct in the correct size.\n"
-                         "size required 6\n"
-                         f"your size {len(eye)}")
-def is_closed(eye):
-    return eye <= 0.2
-
-def get_EAR_left_eye():
-    return EAR(left_eye)
-
-def get_EAR_right_eye():
-    return EAR(right_eye)
-
-#print (f"dddd{left_eye}")
-
-EAR_left = EAR(left_eye)
-EAR_Right = EAR(right_eye)
-
-print(f"EAR on left eye: {EAR_left}")
-
-print(f"EAR on right eye: {EAR_Right}")
-'''
-
-
 
 class EARCalculator:
 
@@ -158,6 +104,7 @@ class EARCalculator:
     
     @staticmethod
     def is_eye_closed(ear, threshold = 0.19):
+        #The threshold is good enough
         # Determines if the eye is closed based on EAR.
         return ear <= threshold
 

@@ -5,8 +5,11 @@ import numpy as np
 import imutils
 import dlib
 import cv2
-
+import time
 from EAR_calculation import EARCalculator
+
+def calculate_blink_duration(start):
+    return time.time() - start
 
 predictor_path = "shape_predictor_68_face_landmarks.dat"
 
@@ -29,6 +32,8 @@ detector = dlib.get_frontal_face_detector()
 # Initialize the shape predictor
 predictor = dlib.shape_predictor(predictor_path)
 
+blink = False
+blink_duration = 0.0
 
 # Loop over frames from the video stream
 while True:
@@ -57,8 +62,18 @@ while True:
         left_closed = EARCalculator.is_eye_closed(left_ear)
         right_closed = EARCalculator.is_eye_closed(right_ear)
 
-        if left_closed or right_closed:
+        
+
+        if (left_closed or right_closed) and not blink:
+            time_start = time.time()
+            blink = True
+        
+        if blink and not left_closed and not right_closed:
+            blink_duration = calculate_blink_duration(time_start)
             print("Blink detected")
+            print(f"Blink duration {blink_duration}")
+            
+            blink = False
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
@@ -84,8 +99,6 @@ while True:
         for (x, y) in shape:
             cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
         
-        
-
     # Display the resulting frame
     cv2.imshow("Facial Landmarks", frame)
 
