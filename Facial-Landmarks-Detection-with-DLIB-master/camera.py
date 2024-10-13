@@ -14,6 +14,13 @@ def calculate_blink_duration(start):
 predictor_path = "shape_predictor_68_face_landmarks.dat"
 
 ear_calculator = EARCalculator(predictor_path)
+
+blink = False
+blink_duration = 0.0
+
+blinks_log = {} #dictionary for time stamps and duratino 
+# key : timestamp of each blink, value : blink duration
+
 # Start video capture (0 = default webcam)
 cap = cv2.VideoCapture(0)
 
@@ -32,9 +39,8 @@ detector = dlib.get_frontal_face_detector()
 # Initialize the shape predictor
 predictor = dlib.shape_predictor(predictor_path)
 
-blink = False
-blink_duration = 0.0
 
+start_time = time.time()
 # Loop over frames from the video stream
 while True:
     # Capture frame-by-frame
@@ -62,16 +68,18 @@ while True:
         left_closed = EARCalculator.is_eye_closed(left_ear)
         right_closed = EARCalculator.is_eye_closed(right_ear)
 
-        
-
         if (left_closed or right_closed) and not blink:
             time_start = time.time()
             blink = True
         
         if blink and not left_closed and not right_closed:
             blink_duration = calculate_blink_duration(time_start)
-            print("Blink detected")
-            print(f"Blink duration {blink_duration}")
+            current_time = time.time() - start_time
+
+            blinks_log[current_time] = blink_duration
+
+            #print("Blink detected")
+            #print(f"Blink duration {blink_duration}")
             
             blink = False
 
@@ -109,3 +117,5 @@ while True:
 # Release the webcam and close windows
 cap.release()
 cv2.destroyAllWindows()
+
+print(blinks_log)
