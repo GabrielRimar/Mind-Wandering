@@ -114,7 +114,7 @@ while True:
 
     # Break the loop if the user presses the 'q' key
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        blink_log.save_data('file1')
+        blink_log.save_data()
         break
 
 # Release the webcam and close windows

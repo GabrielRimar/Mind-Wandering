@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+import os
 
 class BlinkAnalysis:
     def __init__(self):
@@ -49,6 +50,9 @@ class BlinkAnalysis:
         last_min = self.blink_df[self.blink_df['start_time'] > current_time - 60]
         return last_min
     
-    def save_data(self,file_name):
-        file_name += '.csv'
-        self.blink_df.to_csv(file_name, index=False)
+    def save_data(self):
+        folder_path = 'data'
+        file_name = time.strftime('%A_%Y-%m-%d_%H-%M-%S')
+        file_path = os.path.join(folder_path, file_name  + '.csv')
+
+        self.blink_df.to_csv(file_path, index=False)
