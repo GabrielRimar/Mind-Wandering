@@ -107,8 +107,3 @@ class EARCalculator:
         #The threshold is good enough
         # Determines if the eye is closed based on EAR.
         return ear <= threshold
-
-
-        
-
-        
