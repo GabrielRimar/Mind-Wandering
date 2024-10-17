@@ -68,10 +68,9 @@ while True:
                     blink_end_time = stopped_blibking
 
                     blink_log.add_blink(blink_start_time , blink_end_time)
-
-                    #print(blink_log[len(blink_log) -1])
                     blink_start_time = None
                     stopped_blibking = 0
+                    
                     #print("Blink detected")
                     #print(f"Blink duration {blink_duration}")
             else:

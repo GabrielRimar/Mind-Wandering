@@ -15,6 +15,7 @@ class BlinkAnalysis:
             'end_time' : end_time,
             'duration' : duration
         })
+        
         self.blink_df = pd.concat([self.blink_df, new_blink.to_frame().T], ignore_index=True)
     
     @staticmethod
