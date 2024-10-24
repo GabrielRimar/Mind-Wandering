@@ -1,11 +1,9 @@
 import pandas as pd
-import time
 import os
 
 class BlinkAnalysis:
     def __init__(self):
         self.blink_df = pd.DataFrame(columns=['start_time', 'end_time', 'duration'])
-        self.start = time.time()
     
     def add_blink(self, start_time, end_time):
         duration = self._blink_duration(start_time, end_time)
@@ -15,15 +13,12 @@ class BlinkAnalysis:
             'end_time' : end_time,
             'duration' : duration
         })
-        
         self.blink_df = pd.concat([self.blink_df, new_blink.to_frame().T], ignore_index=True)
     
     @staticmethod
     def _blink_duration(start_time, end_time):
         return end_time - start_time
     
-    def get_time_from_start(self):
-        return time.time() - self.start
 
     def get_blinks_last_minute(self):
         #method will return the blinking rate in the last minute or less if the info isn't aveliable
@@ -51,9 +46,9 @@ class BlinkAnalysis:
         last_min = self.blink_df[self.blink_df['start_time'] > current_time - 60]
         return last_min
     
-    def save_data(self):
+    def save_data(self, file_name):
         folder_path = 'data'
-        file_name = time.strftime('%A_%Y-%m-%d_%H-%M-%S')
         file_path = os.path.join(folder_path, file_name  + '.csv')
+        
 
         self.blink_df.to_csv(file_path, index=False)
