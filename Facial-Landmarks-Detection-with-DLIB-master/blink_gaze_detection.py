@@ -23,6 +23,7 @@ class BlinkGazeTracker:
         self.start_time = time.time()
         gaze_start_time = 0
         blink_start_time = 0
+        blink_end = None
         left_eye_vector, right_eye_vector = None, None
         face_detected = False
         cap = cv2.VideoCapture(source)
@@ -59,9 +60,13 @@ class BlinkGazeTracker:
                 if blink_start_time == 0 and (left_eye_closed or right_eye_closed):
                     blink_start_time = current_time
                 
-                elif blink_start_time != 0 and not (left_eye_closed or right_eye_closed):
-                    self.blink_log.add_blink(blink_start_time, current_time)
-                    blink_start_time = 0
+                elif blink_start_time != 0 and not (left_eye_closed and right_eye_closed):
+                    if(blink_end is None):
+                        blink_end = current_time
+                    if(current_time - blink_end >= 0.01):
+                        self.blink_log.add_blink(blink_start_time, current_time)
+                        blink_start_time = 0
+                        blink_end = None
             
             cv2.imshow("webcam detections", self.detected_face.highlight_landmarks())
 
