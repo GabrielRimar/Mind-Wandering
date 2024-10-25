@@ -27,15 +27,25 @@ class Eye:
         region = landmarks_points
         region = region.astype(np.int32)
 
+        '''
         height, width = frame.shape[:2] # dimantions of the frame
         black_frame = np.zeros((height, width), np.uint8) # array in the frame dimantions but all blacked filled with 0
         # np.uint8 used in 0 - 255 values 
         mask = mask = np.full((height, width), 255, np.uint8) # array filled with white values 255
         cv2.fillPoly(mask, [region], (0, 0, 0)) # poligon on the mask with a black cutout in the region of the eye
-        eye = cv2.bitwise_not(black_frame, frame.copy(), mask=mask) # blacks out the entire face exept the eye
+
+        color_mask = cv2.merge([mask, mask, mask])  # Convert mask to three channels
+        eye = cv2.bitwise_and(black_frame,frame, color_mask)
+        #eye = cv2.bitwise_and(frame, frame, mask=mask) # blacks out the entire face exept the eye'''
+        height, width = frame.shape[:2]
+        black_frame = np.zeros((height, width), np.uint8)
+        mask = np.full((height, width), 255, np.uint8)
+        cv2.fillPoly(mask, [region], (0, 0, 0))
+        mask = cv2.bitwise_not(mask)
+        eye = cv2.bitwise_and(frame, frame, mask=mask)
 
         # Cropping the eye
-        margin = 5 # five pixel ofset
+        margin = 10 # five pixel ofset
         min_x = np.min(region[:, 0]) - margin
         max_x = np.max(region[:, 0]) + margin
         min_y = np.min(region[:, 1]) - margin
@@ -61,6 +71,7 @@ class Eye:
             and self.pupil.y is not None
             and self.pupil.x is not None
             and self.pupil.y is not None)
+    
     @staticmethod
     def _calculate_EAR(landmark_points):
         if len(landmark_points) != 6:
@@ -79,3 +90,6 @@ class Eye:
     def _eye_center(landmarks):
         # center will be (0,0) for me and of the pupil located there the person is looking strate
         return landmarks.mean(axis=0)
+
+
+

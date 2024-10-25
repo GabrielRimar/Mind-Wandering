@@ -17,45 +17,40 @@ class Pupil:
 
     @staticmethod
     def image_processing(eye_frame):
-        """Performs operations on the eye frame to isolate the iris
-
-        Arguments:
-            eye_frame (numpy.ndarray): Frame containing an eye and nothing else
-
-        Returns:
-            A frame with a single element representing the iris
-        """
-        kernel = np.ones((3, 3), np.uint8)
+        """Performs operations on the eye frame to isolate the iris"""
+        # Convert to grayscale
+        eye_frame_gray = cv2.cvtColor(eye_frame, cv2.COLOR_BGR2GRAY)
         
-        # Apply bilateral filter to reduce noise while preserving edges
-        new_frame = cv2.bilateralFilter(eye_frame, 10, 15, 15)
-        
-        # Apply erosion to clean the frame
-        new_frame = cv2.erode(new_frame, kernel, iterations=3)
-        
-        # Use adaptive thresholding to automatically determine the threshold based on the image
-        new_frame = cv2.adaptiveThreshold(new_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                          cv2.THRESH_BINARY_INV, 11, 2)
+        #
+        # Calculate average intensity
+        non_black_pixels = eye_frame_gray[eye_frame_gray > 0]
+        avg_intensity = np.mean(non_black_pixels)
 
-        return new_frame
+        # Set all 100% black pixels to white
+        eye_frame_gray[eye_frame_gray == 0] = 255
+
+        
+        # Apply thresholding based on the average intensity
+        _, thresholded_frame1 = cv2.threshold(eye_frame_gray, avg_intensity, 255, cv2.THRESH_BINARY)
+        _, thresholded_frame2 = cv2.threshold(eye_frame_gray, avg_intensity + 10, 255, cv2.THRESH_BINARY)
+
+        combined_frame = cv2.bitwise_and(thresholded_frame1, thresholded_frame2)
+
+        combined_frame = cv2.bitwise_not(combined_frame)
+
+        return combined_frame
 
     def detect_iris(self, eye_frame):
-        """Detects the iris and estimates the position of the iris by
-        calculating the centroid.
-
-        Arguments:
-            eye_frame (numpy.ndarray): Frame containing an eye and nothing else
-        """
+        """Detects the iris and estimates the position of the iris by calculating the centroid."""
         self.iris_frame = self.image_processing(eye_frame)
 
         # Find contours in the processed frame
         contours, _ = cv2.findContours(self.iris_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
-        
-        # Sort contours by area and choose the second largest one, assuming it's the iris
-        contours = sorted(contours, key=cv2.contourArea)
 
+        # Sort contours by area and choose the largest one, assuming it's the iris
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
         try:
-            moments = cv2.moments(contours[-2])
+            moments = cv2.moments(contours[0])
             self.x = int(moments['m10'] / moments['m00'])
             self.y = int(moments['m01'] / moments['m00'])
         except (IndexError, ZeroDivisionError):

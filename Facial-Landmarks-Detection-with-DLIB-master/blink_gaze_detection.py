@@ -1,4 +1,3 @@
-#import dlib
 import cv2
 import time
 import imutils
@@ -9,9 +8,6 @@ from gaze_analysis import GazeAnalysis
 
 class BlinkGazeTracker:
     def __init__(self, shape_predictor_path, video_source):
-        #self.detector = dlib.get_frontal_face_detector()
-        #self.predictor = dlib.shape_predictor(shape_predictor_path)
-        
         self.detected_face = Face(shape_predictor_path)
 
         self.blink_log = BlinkAnalysis()
@@ -48,12 +44,9 @@ class BlinkGazeTracker:
             
             # gaze detection part
             if face_detected:
-                #print("Face detected")
-                #print(self.detected_face.gaze_detection())
                 new_left_eye_vector, new_right_eye_vector = self.detected_face.gaze_detection()
 
                 if(left_eye_vector, right_eye_vector != new_left_eye_vector, new_right_eye_vector):
-                    #print(left_eye_vector, right_eye_vector)
                     self.gaze_log.add_point(left_eye_vector, right_eye_vector, gaze_start_time,current_time)
                     
                     left_eye_vector = new_left_eye_vector
@@ -77,7 +70,6 @@ class BlinkGazeTracker:
             
         cap.release()
         cv2.destroyAllWindows()
-        #print(self.blink_log)
         self.blink_log.save_data('blink_log')
         self.gaze_log.save_data('gaze_log')
 

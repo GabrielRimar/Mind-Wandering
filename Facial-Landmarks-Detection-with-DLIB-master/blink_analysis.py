@@ -19,7 +19,7 @@ class BlinkAnalysis:
     def _blink_duration(start_time, end_time):
         return end_time - start_time
     
-
+    
     def get_blinks_last_minute(self):
         #method will return the blinking rate in the last minute or less if the info isn't aveliable
         last_min = self._get_df_last_minute()
