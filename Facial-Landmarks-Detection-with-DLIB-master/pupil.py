@@ -21,7 +21,6 @@ class Pupil:
         # Convert to grayscale
         eye_frame_gray = cv2.cvtColor(eye_frame, cv2.COLOR_BGR2GRAY)
         
-        #
         # Calculate average intensity
         non_black_pixels = eye_frame_gray[eye_frame_gray > 0]
         avg_intensity = np.mean(non_black_pixels)
