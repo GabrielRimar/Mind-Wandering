@@ -3,7 +3,7 @@
 ## GIF Example
 Here’s a GIF demonstrating the blink and gaze tracking in action:
 
-![Blink Gaze Tracker in Action](docomintation/video example.gif)
+![Blink Gaze Tracker in Action](video_example.gif)
 
 #Installation
 To set up the project, follow these steps:
