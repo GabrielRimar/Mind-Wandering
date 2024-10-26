@@ -10,7 +10,7 @@ To set up the project, follow these steps:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/blink-gaze-tracker.git
+git clone https://github.com/GabrielRimar/Mind-Wandering.git
 ```
 2. Navigate to the project directory:
 ```bash
