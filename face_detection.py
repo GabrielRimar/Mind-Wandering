@@ -100,19 +100,13 @@ class Face:
 
         return pupil_pos
 
-import imutils
+''' you could run it on a singel photo 
 if __name__ == "__main__":
-    predictor_path = "shape_predictor_68_face_landmarks.dat"
-    image = cv2.imread("images\left.jpg")
+    predictor_path = "predictor_path"
+    image = cv2.imread("image_path")
 
-    detected_face = Face(predictor_path)
-    iamge = imutils.resize(image, width=600)
-
-    detected_face.refresh(image)
-    cv2.imshow("face", detected_face.frame)
-    cv2.imshow("left eye", detected_face.left_eye.frame)
-    cv2.imshow("left iris", detected_face.left_eye.pupil.iris_frame)
-    cv2.imshow("landmarks", detected_face.highlight_landmarks())
-    #print(detected_face.right_eye.pupil.x, detected_face.right_eye.pupil.y)
-
-    cv2.waitKey(0)
+    face = Face(predictor_path)
+    face.refresh(image)
+    
+    cv2.imshow("detected face with landmarks", face.highlight_landmarks())
+'''
