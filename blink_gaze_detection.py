@@ -48,7 +48,9 @@ class BlinkGazeTracker:
                 new_left_eye_vector, new_right_eye_vector = self.detected_face.gaze_detection()
 
                 if(left_eye_vector, right_eye_vector != new_left_eye_vector, new_right_eye_vector):
-                    self.gaze_log.add_point(left_eye_vector, right_eye_vector, gaze_start_time,current_time)
+                    left_eye_dim = self.detected_face.left_eye.frame.shape[:2]
+                    right_eye_dim = self.detected_face.right_eye.frame.shape[:2]
+                    self.gaze_log.add_point(left_eye_vector, right_eye_vector, gaze_start_time,current_time, left_eye_dim, right_eye_dim)
                     
                     left_eye_vector = new_left_eye_vector
                     right_eye_vector = new_right_eye_vector
