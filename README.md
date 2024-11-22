@@ -3,14 +3,14 @@
 ## GIF Example
 Here’s a GIF demonstrating the blink and gaze tracking in action:
 
-![Blink Gaze Tracker in Action](video_example.gif)
+![GIF cool](docomintation/video_example.gif)
 
 #Installation
 To set up the project, follow these steps:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/blink-gaze-tracker.git
+git clone https://github.com/GabrielRimar/Mind-Wandering.git
 ```
 2. Navigate to the project directory:
 ```bash
