@@ -16,7 +16,8 @@ class Face:
 
         self.right_eye = None
         self.left_eye = None
-    
+        self.threshold = None
+        
     def _analyze(self):
         """
             Method detects face using dlib, and saves to self.face_landmarks
@@ -34,22 +35,29 @@ class Face:
 
         left_eye = landmarks[36:42] 
         right_eye = landmarks[42:48]
-
-        self.left_eye = Eye(original_frame=self.frame, landmarks=left_eye)
-        self.right_eye = Eye( original_frame=self.frame, landmarks=right_eye)
+        
+        self.left_eye = Eye(original_frame=self.frame, landmarks=left_eye, threshold=self.threshold)
+        self.right_eye = Eye( original_frame=self.frame, landmarks=right_eye, threshold=self.threshold)
 
     def refresh(self, frame):
         self.frame = frame
         self._analyze()
 
-    def closed_eyes(self, threshold = 0.19):
+    def set_ear_threshold(self, threshold):
+        self.threshold = threshold
+
+    
+    def closed_eyes(self):
         """
             Returns  left_eye_closed : bool, right_eye_closed : bool
         """
-        left_eye_closed = self.left_eye.ear <= threshold
-        right_eye_closed = self.right_eye.ear <= threshold
+        if self.left_eye.threshold is not None:
+            left_eye_closed = self.left_eye.ear <= self.left_eye.threshold
+            right_eye_closed = self.right_eye.ear <= self.right_eye.threshold
 
-        return left_eye_closed, right_eye_closed
+            return left_eye_closed, right_eye_closed
+
+        return False, False
     
     def gaze_detection(self):
         if not self.left_eye.pupils_detected() or not self.right_eye.pupils_detected():

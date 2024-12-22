@@ -5,14 +5,15 @@ import math
 from pupil import Pupil
 
 class Eye:
-    def __init__(self, original_frame, landmarks):
+    def __init__(self, original_frame, landmarks, threshold):
         # right_eye : bool - will determine right eye or left 
         self.landmark_points = None 
-        self.frame = None
+        self.frame = None 
         self.center = None
         self.pupil = None
         self.ear = None
         self.origin = None
+        self.threshold = threshold
 
         if original_frame is not None and landmarks is not None:
             self._analyze(original_frame, landmarks)
@@ -62,6 +63,9 @@ class Eye:
             and self.pupil.x is not None
             and self.pupil.y is not None)
     
+    '''def set_threshold(self, threshold):
+        self.threshold = threshold
+    '''
     @staticmethod
     def _calculate_EAR(landmark_points):
         if len(landmark_points) != 6:
@@ -80,6 +84,3 @@ class Eye:
     def _eye_center(landmarks):
         # center will be (0,0) for me and of the pupil located there the person is looking strate
         return landmarks.mean(axis=0)
-
-
-
