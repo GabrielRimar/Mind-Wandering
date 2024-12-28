@@ -59,8 +59,6 @@ class Eye:
     
     def pupils_detected(self):
         return (self.pupil.x is not None
-            and self.pupil.y is not None
-            and self.pupil.x is not None
             and self.pupil.y is not None)
     
     '''def set_threshold(self, threshold):
