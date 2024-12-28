@@ -76,7 +76,17 @@ class Face:
 
         return left_eye_vector, right_eye_vector
             
+    @staticmethod
+    def _eye_offset(pupil_pos, eye_center):
+        """
+            Returns the position
+        """
+        #print(pupil_pos, eye_center)
+        pupil_pos[0] -= eye_center[0]
+        pupil_pos[1] -= eye_center[1]
 
+        return pupil_pos
+    
     def highlight_landmarks(self):
         if(self.right_eye is None or self.left_eye is None) or (not self.left_eye.pupils_detected() or not self.right_eye.pupils_detected()):
             return self.frame
@@ -97,16 +107,7 @@ class Face:
 
         return frame_with_landmarks
     
-    @staticmethod
-    def _eye_offset(pupil_pos, eye_center):
-        """
-            Returns the position
-        """
-        #print(pupil_pos, eye_center)
-        pupil_pos[0] -= eye_center[0]
-        pupil_pos[1] -= eye_center[1]
-
-        return pupil_pos
+    
 
 ''' you could run it on a singel photo 
 if __name__ == "__main__":
