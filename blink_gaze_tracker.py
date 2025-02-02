@@ -129,7 +129,7 @@ class BlinkGazeTracker:
                             blink_end = None
             frame_num += 1
             
-            #cv2.imshow("webcam detections", self.detected_face.highlight_landmarks())
+            cv2.imshow("webcam detections", self.detected_face.highlight_landmarks())
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

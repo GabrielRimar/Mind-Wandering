@@ -47,8 +47,5 @@ class BlinkAnalysis:
         return last_min
     
     def save_data(self, file_name):
-        folder_path = 'data'
         file_path = os.path.join(file_name  + '.csv')
-        
-
         self.blink_df.to_csv(file_path, index=False)

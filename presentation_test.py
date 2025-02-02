@@ -9,7 +9,7 @@ class KeyboardListener:
         self.key_to_track = key_to_track
         self.stop_key = stop_key
         self.stop_event = stop_event
-        self.file_name = file_name
+        self.file_name = file_name + '.csv'
         self.slide = 0 # the slide i am on
         self.number_of_slides = number_of_slides
         self.calibration_key = calibration_key
@@ -22,8 +22,9 @@ class KeyboardListener:
     def on_press(self, key):
         current_time = time.time() - self.start_time
         try:
-            if key.char == self.key_to_track:
+            if key == self.key_to_track:
                 self.log_file = pd.concat([self.log_file, pd.DataFrame({'action': ['mind_wandering'], 'time': [current_time], 'slide' : self.slide})])
+            
             elif key.char == self.stop_key and self.stop_event:
                 self.stop()
             
@@ -50,7 +51,8 @@ class KeyboardListener:
 
     def stop(self):
         self.stop_event.set()
-        self.log_file.to_csv(f'{self.file_name}.csv', index=False)
+        self.log_file.to_csv(self.file_name, index=False)
+        print({self.file_name})
 
 
 from face_detection import Face
@@ -64,10 +66,13 @@ class WebcamRecorder:
         self.face_detector = Face(shape_predictor_path)
         self.recording_started = False
 
-    def start_recording(self):
+    
+
+
+    def start_recording(self, show_frame = True):
         cap = cv2.VideoCapture(self.source)
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(self.output_file, fourcc, 25.0, (640, 480))
+        out = cv2.VideoWriter(self.output_file, fourcc, 47, (640, 480))
 
         while not self.stop_event.is_set():
             ret, frame = cap.read()
@@ -75,7 +80,10 @@ class WebcamRecorder:
                 if not self.start_recording:
                     self._find_face(frame)
                 else: 
+                    if show_frame:
+                        self.show_highlighted_face(frame)
                     out.write(frame)
+            
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -85,6 +93,16 @@ class WebcamRecorder:
         out.release()
         cv2.destroyAllWindows()
     
+    def show_highlighted_face(self, frame):
+        if frame is None or frame.size == 0:
+            return
+        
+        try:
+            self.face_detector.refresh(frame)
+            cv2.imshow("webcam detections", self.face_detector.highlight_landmarks())
+        except ValueError as e:
+            print(e)
+
     def _find_face(self, frame):
         try:
             self.face_detector.refresh(frame)
@@ -95,6 +113,8 @@ class WebcamRecorder:
 
     def stop_recording(self):
         self.stop_recording = True
+    
+    
 
 
 import threading
@@ -104,7 +124,7 @@ import argparse
 def run_check():
     global video_file
     global inputs_file
-    number_of_slides = 6
+    number_of_slides = 2
 
     stop_event = threading.Event()
     
@@ -129,23 +149,7 @@ def run_check():
     webcam_thread.join()
     keyboard_thread.join()
 
-    process_data(video_file, keyboard_listener.file_name)
-
     #if key 'q' pressed make both stop
-
-#import numpy as np
-
-
-from blink_gaze_tracker import BlinkGazeTracker
-
-def process_data(video_file_path, calibration_times):
-    global shape_predictor_path
-    global blink_log
-    global gaze_log
-    blink_gaze = BlinkGazeTracker(shape_predictor_path,blink_log, gaze_log)
-
-    blink_gaze.analyze_video(source= video_file_path, user_inputs= calibration_times)
-
 
 parser = argparse.ArgumentParser(description="Run the recording and processing pipeline.") 
 parser.add_argument("-f", "--folder", type=str, required=True, help="Folder path to save files") 
@@ -158,7 +162,7 @@ def get_full_path(folder_path, file_name):
     return os.path.join(folder_path, file_name)
 
 video_file = get_full_path(args.folder, f'video_recording_{args.subject}.avi')
-inputs_file = get_full_path(args.folder, f'user_inputs_{args.subject}.csv')
+inputs_file = get_full_path(args.folder, f'user_inputs_{args.subject}')
 shape_predictor_path = args.shape_predictor
 blink_log = get_full_path(args.folder, f'blink_log_{args.subject}')
 gaze_log = get_full_path(args.folder, f'gaze_log_{args.subject}')
