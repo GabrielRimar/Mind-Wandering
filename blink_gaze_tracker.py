@@ -79,36 +79,34 @@ class BlinkGazeTracker:
                 face_detected = True
             
             except ValueError as e:
-                #print(e)
                 pass
-            #print(f'in calibration {in_calibration}, current time {current_time}, {calibration_periods[-1][1]}')
-            
-            
 
             # gaze detection part
             if face_detected:
+                in_calibration = self._in_calibration(calibration_periods, current_time)
                 if in_calibration:
+                    if calibration_periods is not None:
+                        #handales a case it doesn't have calibration periods
+                        self.detected_face.set_ear_threshold(0.2)
                     
-                    if current_time > calibration_periods[-1][1]:
+                    elif current_time > calibration_periods[-1][1]:
                         series = pd.Series(ear_values)
                         self.detected_face.set_ear_threshold(series.median())
                         print(series.mean())
                         in_calibration = False
                 
-            
                     if self._in_calibration(calibration_periods, current_time):
                         ear_values.append((self.detected_face.right_eye.ear + self.detected_face.left_eye.ear)/2)
                 
                 else:
                     new_left_eye_vector, new_right_eye_vector = self.detected_face.gaze_detection()
-
-                     
+                    #print(new_left_eye_vector, new_right_eye_vector)
 
                     if(left_eye_vector, right_eye_vector != new_left_eye_vector, new_right_eye_vector):
                         left_eye_dim = self.detected_face.left_eye.frame.shape[:2]
                         right_eye_dim = self.detected_face.right_eye.frame.shape[:2]
                         self.gaze_log.add_point(left_eye_vector, right_eye_vector, gaze_start_time,current_time, left_eye_dim, right_eye_dim)
-                        
+                    #    print(gaze_start_time > current_time)
                         left_eye_vector = new_left_eye_vector
                         right_eye_vector = new_right_eye_vector
                         gaze_start_time = current_time
@@ -129,7 +127,7 @@ class BlinkGazeTracker:
                             blink_end = None
             frame_num += 1
             
-            cv2.imshow("webcam detections", self.detected_face.highlight_landmarks())
+            #cv2.imshow("webcam detections", self.detected_face.highlight_landmarks())
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

@@ -1,0 +1,17 @@
+action,time,slide
+start_calibrating,5.566666666666666,0
+end_calibrating,6.0,0
+start_calibrating,6.333333333333333,0
+end_calibrating,6.9,0
+slide_transition,7.733333333333333,0
+slide_transition,11.4,1
+slide_transition,11.7,2
+slide_transition,12.533333333333333,3
+slide_transition,18.3,4
+slide_transition,26.9,5
+mind_wandering,28.766666666666666,6
+slide_transition,37.166666666666664,6
+slide_transition,47.96666666666667,7
+mind_wandering,52.46666666666667,8
+mind_wandering,60.3,8
+slide_transition,67.3,8

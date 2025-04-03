@@ -1,6 +1,7 @@
 from imutils import face_utils
 import dlib
 import cv2
+import numpy as np
 
 from eye import Eye
 
@@ -22,10 +23,12 @@ class Face:
         """
             Method detects face using dlib, and saves to self.face_landmarks
         """
-
+        #print(self.frame is not None, self.frame.size != 0)
+        #cv2.imshow("frame", self.frame)
+        if self.frame is None or self.frame.size == 0:
+            return
         gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
         faces = self.detector(gray,0)
-
         if len(faces) == 0:
             raise ValueError("No face detected")
 
@@ -88,7 +91,18 @@ class Face:
         return pupil_pos
     
     def highlight_landmarks(self):
-        if(self.right_eye is None or self.left_eye is None) or (not self.left_eye.pupils_detected() or not self.right_eye.pupils_detected()):
+        #if(self.right_eye is None or self.left_eye is None) or (not self.left_eye.pupils_detected() or not self.right_eye.pupils_detected()):
+        #    return self.frame
+        if self.frame is None or self.frame.size == 0:
+            print("Error: highlight_landmarks() received None as frame.")
+            return np.zeros((480, 640, 3), dtype=np.uint8)  # Return a blank image
+    
+        if self.right_eye is None or self.left_eye is None:
+            print("Error: Eyes not detected in highlight_landmarks()")
+            return self.frame  # Return original frame instead of None
+        
+        if not self.left_eye.pupils_detected() or not self.right_eye.pupils_detected():
+            print("Error: Pupils not detected")
             return self.frame
         
         frame_with_landmarks = self.frame.copy()
@@ -106,7 +120,7 @@ class Face:
         cv2.circle(frame_with_landmarks, right_pupil_pos, 2, (0, 0, 255), -1)
 
         return frame_with_landmarks
-    
+
     
 
 ''' you could run it on a singel photo 
