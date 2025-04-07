@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 
-def run_blink_gaze_tracker(video_file, user_inputs_file, output_folder,file_name,
+def run_blink_gaze_tracker(video_file, user_inputs_file, output_folder,file_name, EAR,
                            shape_predictor="shape_predictor_68_face_landmarks.dat"):
     """
     Uses BlinkGazeTracker to process the video and generate blink and gaze logs.
@@ -15,7 +15,7 @@ def run_blink_gaze_tracker(video_file, user_inputs_file, output_folder,file_name
     if not os.path.exists(blink_log_path) or not os.path.exists(gaze_log_path):
         print("Running BlinkGazeTracker to generate logs...")
         from blink_gaze_tracker import BlinkGazeTracker  # Import your tracker class
-        tracker = BlinkGazeTracker(shape_predictor, blink_log_path, gaze_log_path)
+        tracker = BlinkGazeTracker(shape_predictor, blink_log_path, gaze_log_path , EAR)
         tracker.analyze_video(video_file, user_inputs_file)
     else:
         print("Blink and gaze logs already exist, skipping video processing.")
@@ -148,11 +148,11 @@ def split_by_slides(blink_df, gaze_df, user_inputs_df):
     
     return blink_df, gaze_df'''
     
-def process_data(video_file, user_inputs_file, output_folder, full_only=False, shape_predictor="shape_predictor_68_face_landmarks.dat"):
+def process_data(video_file, user_inputs_file, output_folder, EAR, full_only=False, shape_predictor="shape_predictor_68_face_landmarks.dat"):
     os.makedirs(output_folder, exist_ok=True)
     
     base_name = os.path.splitext(os.path.basename(video_file))[0]
-    run_blink_gaze_tracker(video_file, user_inputs_file, output_folder, base_name, shape_predictor)
+    run_blink_gaze_tracker(video_file, user_inputs_file, output_folder, base_name, EAR, shape_predictor)
 
     #if not full_only:
     #    process_split_logs(video_file, user_inputs_file, output_folder)
@@ -165,6 +165,7 @@ def cross_check_mind_wandering(user_inputs_df, mind_wandering_df):
     # Extract the mind wandering actions from user inputs
     # Filter for user-reported mind wandering events.
     mw_user_report = user_inputs_df[user_inputs_df['action'] == 'mind_wandering']
+    
     #print(mw_user_report)
     
     # Filter the computed report for slides flagged as mind-wandering.
@@ -217,6 +218,14 @@ if __name__ == "__main__":
             video_path = os.path.join(args.folder, file_name)
             user_inputs_file = os.path.join(args.folder, f"user_inputs_{subject}.csv")
             output_folder = os.path.join(args.folder, "processed_data")
+            calibration_file = os.path.join(args.folder, f"calibration_values_{subject}.csv")
+
+            calib = pd.read_csv(calibration_file)
+            
+            EAR = calib['EAR'].values[0]
+            velocity = calib['velocity'].values[0]
+
+
             
             if os.path.exists(user_inputs_file):
                 print(f"Processing subject {subject}...")
@@ -224,11 +233,11 @@ if __name__ == "__main__":
                 blink_log_path = os.path.join(output_folder, f"video_recording_{subject}_blink_log.csv")
                 gaze_log_path = os.path.join(output_folder, f"video_recording_{subject}_gaze_log.csv")
                 
-                #process_data(video_path, user_inputs_file, output_folder, full_only=args.full_only, shape_predictor=args.shape_predictor)
+                process_data(video_path, user_inputs_file, output_folder, EAR,full_only=args.full_only, shape_predictor=args.shape_predictor)
                 
                 #load_data(blink_log_path, gaze_log_path, user_inputs_file)
 
-                slides = Slides(blink_log_path, gaze_log_path, user_inputs_file, word_count)
+                slides = Slides(blink_log_path, gaze_log_path, user_inputs_file, word_count, velocity)
                 
                 mind_wandering_df = slides.mind_wandering_report()
                 #print(mind_wandering_df)

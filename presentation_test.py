@@ -215,13 +215,18 @@ def ensure_directories_exist():
     os.makedirs(os.path.dirname(video_file), exist_ok=True)
     os.makedirs(os.path.dirname(inputs_file), exist_ok=True)
 
+from calibration import Calibration
 def run_check():
     global video_file, inputs_file
     number_of_slides = 9
     stop_event = threading.Event()
 
     ensure_directories_exist()
-
+    # Initialize the calibration process
+    calibration = Calibration()
+    calibration.start_calibration()
+    # Wait for calibration to finish
+    
     # Create the WebcamRecorder (this will produce the 'video time')
     webcam_recorder = WebcamRecorder(output_file=video_file, source=0, stop_event=stop_event)
     
@@ -263,6 +268,11 @@ def run_check():
     keyboard_thread.join()
     
     cv2.destroyAllWindows()
+    ear, avg_velocity = calibration.data_process()
+   
+    file_path = os.path.join(args.folder, f'calibration_values_{args.subject}.csv')
+    pd.DataFrame({'ear': [ear], 'avg_velocity': [avg_velocity]}).to_csv(file_path, index=False)
+    
     print("[DEBUG] Recording and logging completed.")
 
 parser = argparse.ArgumentParser(description="Run the recording and processing pipeline.") 
