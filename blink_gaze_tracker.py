@@ -41,6 +41,7 @@ class BlinkGazeTracker:
         
         gaze_start_time = 0
         #blink_start_time = 0
+        frame_num = 0
         
         while frame_num < total_frames:
             #current_time = time.time() - self.start_time

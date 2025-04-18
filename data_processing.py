@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
+from blink_gaze_tracker import BlinkGazeTracker  # Import your tracker class
 
 def run_blink_gaze_tracker(video_file, user_inputs_file, output_folder,file_name, EAR,
                            shape_predictor="shape_predictor_68_face_landmarks.dat"):
@@ -14,7 +15,6 @@ def run_blink_gaze_tracker(video_file, user_inputs_file, output_folder,file_name
     # Run the tracker only if one or both log files don't exist.
     if not os.path.exists(blink_log_path) or not os.path.exists(gaze_log_path):
         print("Running BlinkGazeTracker to generate logs...")
-        from blink_gaze_tracker import BlinkGazeTracker  # Import your tracker class
         tracker = BlinkGazeTracker(shape_predictor, blink_log_path, gaze_log_path , EAR)
         tracker.analyze_video(video_file, user_inputs_file)
     else:
@@ -41,9 +41,6 @@ def load_data(blink_log_path, gaze_log_path, user_inputs_path):
     gaze_df['left_eye_x'] = gaze_df['left_eye_from_center'].apply(lambda p: p[0])
     gaze_df['right_eye_x'] = gaze_df['right_eye_from_center'].apply(lambda p: p[0])
 
-    
-    
-    #print(gaze_df.head())
     new_blink_df, new_gaze_df = split_by_slides(blink_df, gaze_df, user_inputs_df)
 
     new_blink_df.to_csv(blink_log_path, index=False)
@@ -148,7 +145,7 @@ def split_by_slides(blink_df, gaze_df, user_inputs_df):
     
     return blink_df, gaze_df'''
     
-def process_data(video_file, user_inputs_file, output_folder, EAR, full_only=False, shape_predictor="shape_predictor_68_face_landmarks.dat"):
+def process_data(video_file, user_inputs_file, output_folder, EAR, shape_predictor="shape_predictor_68_face_landmarks.dat"):
     os.makedirs(output_folder, exist_ok=True)
     
     base_name = os.path.splitext(os.path.basename(video_file))[0]
@@ -196,6 +193,7 @@ def cross_check_mind_wandering(user_inputs_df, mind_wandering_df):
     
     
 from slide import Slides
+from presentation_handler import PresentationHandler
 
 if __name__ == "__main__":
     import argparse
@@ -204,13 +202,12 @@ if __name__ == "__main__":
         description="Process blink and gaze logs. Either generate logs from video or (if logs already exist) split them by slide."
     )
     parser.add_argument("-f", "--folder", type=str, required=True, help="Folder with video files and user inputs")
-    parser.add_argument("--full-only", action="store_true", help="Only generate full blink/gaze logs for the entire presentation; do not split into slides")
-    parser.add_argument("--shape_predictor", type=str, default="shape_predictor_68_face_landmarks.dat", help="Path to shape predictor file")
+    parser.add_argument("-sp", "--shape_predictor", type=str, default="shape_predictor_68_face_landmarks.dat", help="Path to shape predictor file")
     
     args = parser.parse_args()
-    
-    word_count = [42,45,0,56,63,68,100,113,100]
 
+    presentation = PresentationHandler("presentation/presentation.pptx")
+    word_count = presentation.get_number_of_words_per_slide()
     # Loop through video files that follow the naming convention.
     for file_name in os.listdir(args.folder):
         if file_name.startswith("video_recording_") and file_name.endswith(".mp4"):
@@ -222,28 +219,27 @@ if __name__ == "__main__":
 
             calib = pd.read_csv(calibration_file)
             
-            EAR = calib['EAR'].values[0]
-            velocity = calib['velocity'].values[0]
+            EAR = calib['avg_ear'].values[0]
+            velocity = calib['avg_velocity'].values[0]
 
-
-            
             if os.path.exists(user_inputs_file):
                 print(f"Processing subject {subject}...")
                 
                 blink_log_path = os.path.join(output_folder, f"video_recording_{subject}_blink_log.csv")
                 gaze_log_path = os.path.join(output_folder, f"video_recording_{subject}_gaze_log.csv")
                 
-                process_data(video_path, user_inputs_file, output_folder, EAR,full_only=args.full_only, shape_predictor=args.shape_predictor)
+                #process_data(video_path, user_inputs_file, output_folder, EAR, shape_predictor=args.shape_predictor)
                 
-                #load_data(blink_log_path, gaze_log_path, user_inputs_file)
+                load_data(blink_log_path, gaze_log_path, user_inputs_file)
 
                 slides = Slides(blink_log_path, gaze_log_path, user_inputs_file, word_count, velocity)
                 
                 mind_wandering_df = slides.mind_wandering_report()
-                #print(mind_wandering_df)
 
                 results = cross_check_mind_wandering(pd.read_csv(user_inputs_file), mind_wandering_df)
                 
+                print("Mind wanderring detected in the following slides:")
+                print(mind_wandering_df[mind_wandering_df['mind_wandering'] == True][['slide', 'time_period']])
                 print(f"Cross-check results for subject {subject}:")
                 print(len(results))
 

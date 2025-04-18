@@ -130,6 +130,7 @@ class Slide:
     
     def detect_mind_wandering_velocity(self, erratic_ratio_threshold=0.3):
         fixation_duration, avg_velocity = self.extract_fixation_features()
+        
         erratic_velocity_threshold = self.velocity_threshold * 1.5
 
         if len(fixation_duration) == 0:
@@ -143,7 +144,7 @@ class Slide:
         'total_fixations': len(avg_velocity),
         'erratic_fixations': int(np.sum(erratic_fixations)),
         'erratic_ratio': erratic_ratio,
-        'avg_fixation_velocities': avg_velocity
+        'avg_fixation_velocities': avg_velocity     
         }
 
         return mind_wandering, metrics
@@ -166,8 +167,9 @@ class Slide:
     def detect_mind_wandering_overall(self):
         v_flag , v_metrics = self.detect_mind_wandering_velocity()
         b_flag, b_metrics = self.detect_mind_wandering_blink()
+        print (self.slide_number, v_flag, b_flag)
 
-        mind_wandering = v_flag or b_flag
+        mind_wandering = v_flag and b_flag
 
         metrics = {
             'velocity_metrics': v_metrics,
