@@ -3,4 +3,7 @@ test/*
 usful_trash/*
 images/*
 data/*
-
+blink/*
+velocity/*
+mind_wandering_teport.csv
+gaze_log.csv

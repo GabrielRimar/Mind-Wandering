@@ -25,7 +25,7 @@ class KeyboardListener:
         self.key_to_track = key_to_track
         self.stop_key = stop_key
         self.stop_event = stop_event
-        self.file_name = file_name
+        self.file_name = file_name + '.csv'
         self.slide = 0
         self.number_of_slides = number_of_slides
 
@@ -59,6 +59,7 @@ class KeyboardListener:
                             'slide': [self.slide]
                         })
                     ])
+
 
                 elif key.char == self.stop_key:
                     # Stop the entire process
@@ -110,7 +111,7 @@ class KeyboardListener:
             self.listener.stop()
 
 class WebcamRecorder:
-    def __init__(self, output_file, source, stop_event, shape_predictor_path='shape_predictor_68_face_landmarks.dat'):
+    def __init__(self, output_file, source, stop_event):
         self.output_file = output_file
         self.source = source
         self.stop_event = stop_event
@@ -132,9 +133,8 @@ class WebcamRecorder:
 
     def start_recording(self):
         """Continuously reads from the webcam, updates current video time, and writes frames to disk."""
-        print("in strart_recording")
-        cap = cv2.VideoCapture(self.source, cv2.CAP_ANY)
-        print("started recording")
+        cap = cv2.VideoCapture(self.source, cv2.CAP_AVFOUNDATION)
+
         if not cap.isOpened():
             print("[ERROR] Could not open webcam! Check camera permissions.")
             return
@@ -196,202 +196,78 @@ class WebcamRecorder:
             print(f"[ERROR] Face detection failed: {e}")
             return frame
 
-if __name__ == "__main__":
-    def ensure_directories_exist(video_file, inputs_file):
-        os.makedirs(os.path.dirname(video_file), exist_ok=True)
-        os.makedirs(os.path.dirname(inputs_file), exist_ok=True)
+def ensure_directories_exist():
+    os.makedirs(os.path.dirname(video_file), exist_ok=True)
+    os.makedirs(os.path.dirname(inputs_file), exist_ok=True)
 
-    from calibration import Calibration
-    from presentation_handler import PresentationHandler
+from presentation_handler import PresentationHandler
+def run_check():
+    global video_file, inputs_file
+    number_of_slides = 9
+    stop_event = threading.Event()
 
-    def run_check(folder_path, subject, presentation_file = "presentation/presentation.pptx",
-                  calbration_presentation_file = "presentation/calibration.pptx"):
-        print("Starting the examination process...")
-        video_file, inputs_file, calibration_file, word_counts = get_file_paths(folder_path, subject)
-        # Initialize the presentation handler
-        calibration_presentation = PresentationHandler(calbration_presentation_file)
-        # Open the calibration presentation
-        print("Starting calibration...")
-        
-        # Initialize the calibration process
-        calibration_presentation.open_presentation()
-
-        calibration = Calibration()
-        calibration.start_calibration()
-        # Wait for calibration to finish
-        print("Calibration completed.")
-        time.sleep(1)
-
-        
-        presentation = PresentationHandler(presentation_file)
-        number_of_slides = presentation.get_number_of_slides()
-        stop_event = threading.Event()
-
-        ensure_directories_exist(video_file, inputs_file)
-         # Give some time for the webcam to initialize
-        # Create the WebcamRecorder (this will produce the 'video time')
-        webcam_recorder = WebcamRecorder(output_file=video_file, source=0, stop_event=stop_event)
-        
-        # Pass webcam_recorder to KeyboardListener so it can read the same 'video time'
-        keyboard_listener = KeyboardListener(
-            file_name=inputs_file,
-            number_of_slides=number_of_slides,
-            stop_event=stop_event,
-            video_time_source=webcam_recorder
-        )
-
-        # Start threads
-        keyboard_thread = threading.Thread(target=keyboard_listener.start)
-        print("Starting The test...")
-        webcam_recorder.start_recording()
-        keyboard_thread.start()
-        print("keyboard thread started")
-
-
-
-        # Main loop: display frames until 'q' is pressed or we run out
-        while not stop_event.is_set():
-            print("in loop — stop_event:", stop_event.is_set())
-            print("webcam_recorder.latest_frame:", webcam_recorder.latest_frame is not None)
-            if webcam_recorder.latest_frame is not None:
-                try:
-                    print("webcam_recorder.latest_frame is not None")
-                    if threading.current_thread() is threading.main_thread():
-                        cv2.imshow("webcam detections", webcam_recorder.latest_frame)
-                        key = cv2.waitKey(1) & 0xFF
-                        if key == ord('q'):
-                            print("[DEBUG] 'q' key pressed. Stopping recording.")
-                            stop_event.set()
-                            break
-                except Exception as e:
-                    print(f"[ERROR] Display frame error: {e}")
-
-            time.sleep(0.01)
-
-        # Clean up
-        stop_event.set()
-        webcam_thread.join()
-        keyboard_listener.stop()
-        keyboard_thread.join()
-        
-        cv2.destroyAllWindows()
-        ear, avg_velocity = calibration.data_process()
+    ensure_directories_exist()
+    presentation = PresentationHandler("presentation/presentation.pptx")
+    presentation.open_presentation()
+    number_of_slides = presentation.get_number_of_slides()
+    # Create the WebcamRecorder (this will produce the 'video time')
+    webcam_recorder = WebcamRecorder(output_file=video_file, source=0, stop_event=stop_event)
     
-        # Save calibration data to CSV
-        os.makedirs(os.path.dirname(calibration_file), exist_ok=True)
-        pd.DataFrame({'ear': [ear], 'avg_velocity': [avg_velocity]}).to_csv(calibration_file, index=False)
-        #save presentation data
-        presentation.save_data(word_counts)
-        
-        print("[DEBUG] Recording and logging completed.")
+    # Pass webcam_recorder to KeyboardListener so it can read the same 'video time'
+    keyboard_listener = KeyboardListener(
+        file_name=inputs_file,
+        number_of_slides=number_of_slides,
+        stop_event=stop_event,
+        video_time_source=webcam_recorder
+    )
 
-    parser = argparse.ArgumentParser(description="Run the recording and processing pipeline.") 
-    parser.add_argument("-f", "--folder", type=str, required=True, help="Folder path to save files") 
-    parser.add_argument("-s", "--subject", type=str, required=True, help="Test subject name") 
-    parser.add_argument("-shape_predictor", "--shape_predictor", type=str, required=True, help="Shape predictor file path")
+    # Start threads
+    webcam_thread = threading.Thread(target=webcam_recorder.start_recording)
+    keyboard_thread = threading.Thread(target=keyboard_listener.start)
 
-    args = parser.parse_args()
+    webcam_thread.start()
+    keyboard_thread.start()
 
-    def get_full_path(folder_path, file_name):
-        return os.path.join(folder_path, file_name)
-    
-    def get_file_paths(folder_path, subject):
-        video_file = get_full_path(folder_path, f'video_recording_{subject}.mp4')  
-        inputs_file = get_full_path(folder_path, f'user_inputs_{subject}.csv')
-        calibration_file = get_full_path(folder_path, f'calibration_values_{subject}.csv')
-        presentation_file = get_full_path(folder_path, f'words_per_slide_{subject}.csv')
-        return video_file, inputs_file, calibration_file, presentation_file
-    
-    
-
-    shape_predictor_path = args.shape_predictor
-
-
-    def run_check2(folder, subject,
-              presentation_file="presentation/presentation.pptx",
-              calibration_presentation_file="presentation/calibration.pptx"):
-    # 1) Calibration (as you already have it)
-        cal_pres = PresentationHandler(calibration_presentation_file)
-        cal_pres.open_presentation()
-        calibrator = Calibration()
-        calibrator.start_calibration()
-        print("Calibration done. Cleaning up…")
-        time.sleep(0.2)
-
-        # 2) Presentation
-        pres = PresentationHandler(presentation_file)
-        num_slides = pres.get_number_of_slides()
-        pres.open_presentation()
-
-        # 3) Prepare stop_event and time‐source
-        stop_event = threading.Event()
-        class TimeSource:
-            def __init__(self): self.current=0
-            def get_current_video_time(self): return self.current
-        ts = TimeSource()
-
-        # 4) Launch key listener
-        kb = KeyboardListener(
-            file_name=os.path.join(folder, f"user_inputs_{subject}.csv"),
-            number_of_slides=num_slides,
-            stop_event=stop_event,
-            video_time_source=ts
-        )
-        kb.start()
-
-        # 5) Open camera *on main thread*
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
-            raise RuntimeError("Couldn't open camera")
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-
-        # 6) (Optional) prepare recorder
-        out_path = os.path.join(folder, "processed_data", f"{subject}_rec.mp4")
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        writer = cv2.VideoWriter(out_path, fourcc, fps, (w,h))
-
-        # 7) Main read–process–display loop
-        frame_idx = 0
-        while not stop_event.is_set():
-            ret, frame = cap.read()
-            if not ret:
-                print("[ERROR] failed to read frame")
-                break
-
-            ts.current = frame_idx / fps
-            frame_idx += 1
-
-            # Face detection + highlight
+    # Main loop: display frames until 'q' is pressed or we run out
+    while not stop_event.is_set():
+        if webcam_recorder.latest_frame is not None:
             try:
-                pres.face_detector.refresh(frame)
-                disp = pres.face_detector.highlight_landmarks()
-            except Exception:
-                disp = frame
+                if threading.current_thread() is threading.main_thread():
+                    cv2.imshow("webcam detections", webcam_recorder.latest_frame)
+                    key = cv2.waitKey(1) & 0xFF
+                    if key == ord('q'):
+                        print("[DEBUG] 'q' key pressed. Stopping recording.")
+                        stop_event.set()
+                        break
+            except Exception as e:
+                print(f"[ERROR] Display frame error: {e}")
 
-            writer.write(disp)
-            cv2.imshow("Test", disp)
+        time.sleep(0.01)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                stop_event.set()
+    # Clean up
+    stop_event.set()
+    webcam_thread.join()
+    keyboard_listener.stop()
+    keyboard_thread.join()
+    
+    cv2.destroyAllWindows()
+    
+    print("[DEBUG] Recording and logging completed.")
 
-        # 8) Cleanup
-        cap.release()
-        writer.release()
-        cv2.destroyAllWindows()
-        kb.stop()
-        kb.listener.join()
+parser = argparse.ArgumentParser(description="Run the recording and processing pipeline.") 
+parser.add_argument("-f", "--folder", type=str, required=True, help="Folder path to save files") 
+parser.add_argument("-s", "--subject", type=str, required=True, help="Test subject name") 
+parser.add_argument("-sp", "--shape_predictor", type=str, required=True, help="Shape predictor file path")
 
-        # 9) Post‐processing
-        ear, vel = calibrator.data_process()
-        pd.DataFrame({'ear':[ear],'avg_velocity':[vel]})\
-        .to_csv(os.path.join(folder, f"calibration_values_{subject}.csv"), index=False)
-        pres.save_data(output_folder="outputs", file_name="presentation_word_counts.csv")
-        print("All done.")
+args = parser.parse_args()
 
-    run_check2(args.folder, args.subject)
+def get_full_path(folder_path, file_name):
+    return os.path.join(folder_path, file_name)
 
+video_file = get_full_path(args.folder, f'video_recording_{args.subject}.mp4')  
+inputs_file = get_full_path(args.folder, f'user_inputs_{args.subject}')
+shape_predictor_path = args.shape_predictor
+
+run_check()
 
 #qpython3 presentation_test.py -f data/gabriel -s gabriel1 -shape_predictor shape_predictor_68_face_landmarks.dat

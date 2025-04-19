@@ -16,7 +16,7 @@ def run_blink_gaze_tracker(video_file, user_inputs_file, output_folder,file_name
     if not os.path.exists(blink_log_path) or not os.path.exists(gaze_log_path):
         print("Running BlinkGazeTracker to generate logs...")
         tracker = BlinkGazeTracker(shape_predictor, blink_log_path, gaze_log_path , EAR)
-        tracker.analyze_video(video_file, user_inputs_file)
+        tracker.analyze_video(video_file)
     else:
         print("Blink and gaze logs already exist, skipping video processing.")
     
@@ -228,7 +228,7 @@ if __name__ == "__main__":
                 blink_log_path = os.path.join(output_folder, f"video_recording_{subject}_blink_log.csv")
                 gaze_log_path = os.path.join(output_folder, f"video_recording_{subject}_gaze_log.csv")
                 
-                #process_data(video_path, user_inputs_file, output_folder, EAR, shape_predictor=args.shape_predictor)
+                process_data(video_path, user_inputs_file, output_folder, EAR, shape_predictor=args.shape_predictor)
                 
                 load_data(blink_log_path, gaze_log_path, user_inputs_file)
 
@@ -239,7 +239,8 @@ if __name__ == "__main__":
                 results = cross_check_mind_wandering(pd.read_csv(user_inputs_file), mind_wandering_df)
                 
                 print("Mind wanderring detected in the following slides:")
-                print(mind_wandering_df[mind_wandering_df['mind_wandering'] == True][['slide', 'time_period']])
+                mind_wandering_df.to_csv("mind_wandering_report.csv", index=False)
+                print(mind_wandering_df)
                 print(f"Cross-check results for subject {subject}:")
                 print(len(results))
 

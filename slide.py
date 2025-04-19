@@ -33,10 +33,10 @@ class Slides:
             report_data.append({
                 'slide': slide.slide_number,
                 'time_period': slide.slide_period,
-                'word_count': slide.word_count,
-                'estimated_reading_time': slide.estimeated_reading_time,
-                'mind_wandering': mw_flag
-                #'mind_wandering_metrics': metrics
+                'mind_wandering': mw_flag,
+                'velocity_flag': metrics['velocity_metrics'],
+                'blink_rate_flag': metrics['blink_rate_metrics'],
+                'blink_duration_flag': metrics['blink_duration_metrics'],
             })
             #print(metrics)
         
@@ -72,6 +72,7 @@ class Slide:
         return number_of_blinks/slide_duration if slide_duration != 0 else 0
     
     def get_avg_blink_duration(self):
+        print(self.blink_df)
         return self.blink_df['duration'].mean()
         
     def extract_fixation_features(self):
@@ -149,32 +150,42 @@ class Slide:
 
         return mind_wandering, metrics
     
-    def detect_mind_wandering_blink(self, blink_rate_threshold=0.5, avg_blink_duration_threshold_lower_bound=0.1,
-                                    avg_blink_duration_threshold_upper_bound=0.4):
+    def detect_mind_wandering_blink(self, blink_rate_threshold=0.5, 
+                                 avg_blink_duration_threshold_lower_bound=0.1,
+                                 avg_blink_duration_threshold_upper_bound=0.4):
         blink_rate = self.get_blink_rate()
         avg_blink_duration = self.get_avg_blink_duration()
+        print(blink_rate, avg_blink_duration)
 
-        blink_flag = (blink_rate > blink_rate_threshold) or (
+        # Separate flags:
+        rate_flag = blink_rate > blink_rate_threshold
+        duration_flag = (
             avg_blink_duration < avg_blink_duration_threshold_lower_bound or 
-            avg_blink_duration > avg_blink_duration_threshold_upper_bound)
+            avg_blink_duration > avg_blink_duration_threshold_upper_bound
+        )
 
         blink_metrics = {
             'blink_rate': blink_rate,
-            'avg_blink_duration': avg_blink_duration
+            'avg_blink_duration': avg_blink_duration,
+            'rate_flag': rate_flag,
+            'duration_flag': duration_flag
         }
-        return blink_flag, blink_metrics
-    
+
+        return rate_flag, duration_flag, blink_metrics
+
     def detect_mind_wandering_overall(self):
         v_flag , v_metrics = self.detect_mind_wandering_velocity()
-        b_flag, b_metrics = self.detect_mind_wandering_blink()
-        print (self.slide_number, v_flag, b_flag)
+        br_flag, bd_flag, b_metrics = self.detect_mind_wandering_blink()
+        #print (self.slide_number, v_flag, b_flag)
 
-        mind_wandering = v_flag and b_flag
-
+        mind_wandering = v_flag or br_flag or bd_flag
+    
         metrics = {
-            'velocity_metrics': v_metrics,
-            'blink_metrics': b_metrics
+            'velocity_metrics': v_flag,
+            'blink_rate_metrics': br_flag,
+            'blink_duration_metrics': bd_flag
         }
+        print(metrics)
         return mind_wandering, metrics
 
 
